@@ -5,29 +5,42 @@
             <t t-if="package.valid_sscc">
                 <t t-set="barcode" t-value="'00' + package.name"/>
                 <t t-if="package.pack_date" name="datamatrix_pack_date" t-set="barcode" t-value="barcode + '13' + package.pack_date.strftime('%y%m%d')"/>
-                <t t-set="move_id" t-value="package.quant_ids and (package.quant_ids[0].in_move_ids[0].id if package.quant_ids[0].in_move_ids else (package.quant_ids[0].out_move_ids[0].id if package.quant_ids[0].out_move_ids else False))"/>
-                <t t-if="move_id" name="datamatrix_move_id" t-set="barcode" t-value="barcode + '91' + str(move_id)"/>
-^FO310,50
-^A0N,44,33^FDSSCC: <t t-out="package.name"/> <t t-out="quant.product_id.display_name"/>^FS
-^FO310,100^BY3
-<t t-if="package.pack_date">^A0N,44,33^FDPack Date: <t t-out="package.pack_date" t-options="{&quot;widget&quot;: &quot;date&quot;}"/>^FS</t>
-^FO310,150^BY3
-<t t-if="package.package_type_id">^A0N,44,33^FDPackage Type: <t t-out="package.package_type_id.name"/>^FS</t>
-^FO310,200^BY3
-<t t-if="move_id">^A0N,44,33^FDMove: <t t-out="move_id"/>^FS</t>
-^FO100,50^BY3
-^BXN,10,200
+                
+                <t t-set="package_level" t-value="request.env['stock.package_level'].sudo().search([('package_id', '=', package.id)], limit=1)"/>
+                <t t-if="package_level and package_level.picking_id">
+                    <t t-set="picking_name" t-value="package_level.picking_id.name"/>
+                    <t t-if="picking_name" name="qr_picking_name" t-set="barcode" t-value="barcode + '91' + str(picking_name)"/>
+                </t>
+                
+^FO155,25^BY2
+^BQN,2,6
 ^FD<t t-out="barcode"/>^FS
+^FO25,150
+^A0N,28,20^FD<t t-if="package_level and package_level.picking_id"><t t-out="picking_name"/></t>^FS
+^FO25,185
+<t t-if="package.package_type_id">^A0N,28,20^FD<t t-out="package.package_type_id.name"/>^FS</t>
+^FO25,220
+<t t-if="package.shipping_weight">^A0N,28,20^FD<t t-out="'%.2f' % package.shipping_weight"/> lb^FS</t>
+<t t-if="package_level and len(package_level.move_line_ids) == 1">
+^FO25,255
+^A0N,28,20^FD<t t-out="package_level.move_line_ids[0].product_id.name[:35]"/>^FS
+</t>
             </t>
             <t t-else="">
-^FO100,50
-^A0N,44,33^FD<t t-out="package.name"/>^FS
-^FO100,100^BY3
-^BCN,100,Y,N,N
+                <t t-set="package_level" t-value="request.env['stock.package_level'].sudo().search([('package_id', '=', package.id)], limit=1)"/>
+^FO155,25^BY2
+^BQN,2,6
 ^FD<t t-out="package.name"/>^FS
-^FO100,150^BY3
-<t t-set="move_id" t-value="package.quant_ids and (package.quant_ids[0].in_move_ids[0].id if package.quant_ids[0].in_move_ids else (package.quant_ids[0].out_move_ids[0].id if package.quant_ids[0].out_move_ids else False))"/>
-<t t-if="move_id">^A0N,44,33^FDMove: <t t-out="move_id"/>^FS</t>
+^FO25,150
+<t t-if="package_level and package_level.picking_id">^A0N,28,20^FD<t t-out="package_level.picking_id.name"/>^FS</t>
+^FO25,185
+<t t-if="package.package_type_id">^A0N,28,20^FD<t t-out="package.package_type_id.name"/>^FS</t>
+^FO25,220
+<t t-if="package.shipping_weight">^A0N,28,20^FD<t t-out="'%.2f' % package.shipping_weight"/> lb^FS</t>
+<t t-if="package_level and len(package_level.move_line_ids) == 1">
+^FO25,255
+^A0N,28,20^FD<t t-out="package_level.move_line_ids[0].product_id.name[:35]"/>^FS
+</t>
             </t>
 ^XZ
         </t>
